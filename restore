@@ -1,0 +1,106 @@
+#!/bin/bash
+#
+# Modify dnf.conf file
+sudo sh -c "echo 'max_parallel_downloads=10' >> /etc/dnf/dnf.conf"
+sudo sh -c "echo 'fastestmirror=true' >> /etc/dnf/dnf.conf"
+
+# Update system packages
+sudo dnf update -y
+
+# Import key for passwords
+gpg --import secret.gpg
+
+# Install basic development tools
+sudo dnf groupinstall "Development Tools" -y
+# Update firmwares
+sudo fwupdmgr get-devices
+sudo fwupdmgr refresh --force
+sudo fwupdmgr get-updates
+sudo fwupdmgr update
+
+# Install software
+sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
+sudo dnf install https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+
+sudo dnf upgrade --refresh
+sudo dnf -y groupupdate core
+sudo dnf install -y rpmfusion-free-release-tainted
+sudo dnf install -y rpmfusion-nonfree-release-tainted
+sudo dnf install -y dnf-plugins-core
+
+sudo dnf install git gpg neovim thunderbird mpv gnome-tweaks lm_sensors obs-studio papirus-icon-theme unzip p7zip p7zip-plugins unrar gimp qbittorrent hyprland dunst rofi-wayland zoxide ripgrep zsh fzf lxappearance thefuck waybar rustc cargo pass xclip yarnpkg lua-devel newsboat redshift neomutt isync msmtp ca-certificates gettext lynx notmuch abook urlview cronie task go himalaya wayland-devel wayland-protocols-devel hyprlang-devel pango-devel cairo-devel file-devel libglvnd-devel libglvnd-core-devel libjpeg-turbo-devel libwebp-devel gcc-c++ yt-dlp
+
+# Clone your dotfiles repository
+git clone https://github.com/jblais493/logos ~/Logos
+git clone https://github.com/jblais493/newsboat .config/newsboat
+git clone https://github.com/jblais493/scripts .config/scripts
+
+# Copy dotfiles to home directory
+cp -r ~/Logos/hypr ~/.config/
+cp -r ~/Logos/nvim ~/.config/
+cp ~/Logos/.tmux.conf ~/
+cp ~/Logos/.zshrc ~/
+cp ~/Logos/starship.toml ~/.config/
+cp -r ~/Logos/kitty ~/.config/
+cp -r ~/Logos/tmux ~/.config/
+cp -r ~/Logos/alacritty ~/.config/
+cp -r ~/Logos/config/calcure ~/.config/
+cp -r ~/Logos/dunst ~/.config/
+cp -r ~/Logos/zathura ~/.config/
+cp -r ~/Logos/waybar ~/.config/
+cp -r ~/Logos/qbittorrent ~/.config/
+cp -r ~/Logos/ranger ~/.config/
+cp -r ~/Logos/rofi ~/.config/
+cp -r ~/Logos/rofi-pass ~/.config/
+
+# Set your preferred shell (e.g. zsh)
+chsh -s /bin/zsh
+
+# Restart shell to apply changes
+exec $SHELL
+
+# Install Oh My Zsh
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
+# Install Zsh plugins
+git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+
+# Install Starship prompt
+curl -sS https://starship.rs/install.sh | sh
+
+# Install LF Filemanager
+env CGO_ENABLED=0 go install -ldflags="-s -w" github.com/gokcehan/lf@lates
+
+# Add NAS mountpoint
+sudo mkdir /mnt/TrueNAS
+
+sudo dnf copr enable atim/lazygit -y
+sudo dnf install lazygit
+
+# Install Docker
+sudo dnf install docker -y
+sudo systemctl enable docker
+sudo systemctl start docker
+sudo groupadd docker && sudo gpasswd -a ${USER} docker && sudo systemctl restart docker
+
+# Hyprpicker for color picking
+git clone https://github.com/hyprwm/hyprpicker
+cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_INSTALL_PREFIX:PATH=/usr -S . -B ./build
+cmake --build ./build --config Release --target hyprpicker -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
+sudo cmake --install ./build
+
+# Tessen for passwords
+git clone https://git.sr.ht/~ayushnix/tessen
+cd tessen
+sudo make install
+
+
+# # List of repositories to clone, separated by spaces
+# REPOS="logos scripts newsboat"
+#
+# # Loop through the list of repositories and clone each one
+# for REPO in $REPOS; do
+#   git clone https://github.com/jblais493/$REPO.git
+# done
